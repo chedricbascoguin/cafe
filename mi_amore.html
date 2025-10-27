@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Cafe Kiosk — Mi Amore</title>
+  <link rel="stylesheet" href="mi_amore.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="left-panel">
+      <div class="logo">
+        <div class="logo-thumb"></div>
+        <div>
+          <h2>Mi Amore</h2>
+          <small>Brew & Bites</small>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-btn active" data-cat="all">All</button>
+        <button class="nav-btn" data-cat="coffee">Coffee</button>
+        <button class="nav-btn" data-cat="tea">Tea</button>
+        <button class="nav-btn" data-cat="pastry">Pastry</button>
+        <button class="nav-btn" data-cat="snacks">Snacks</button>
+      </nav>
+
+      <div class="promo">
+        <img src="miamore.jpg" alt="cafe hero" />
+        <div class="promo-text">
+          <h3>30% Off</h3>
+          <p>Fitness Meal & Seasonal Drinks</p>
+        </div>
+      </div>
+
+      <footer class="left-footer">
+        <small>Touch to order • Friendly local cafe</small>
+      </footer>
+    </aside>
+
+    <main class="main">
+      <header class="search-row">
+        <input id="search" placeholder="What would you like to eat?" />
+        <div class="profile">
+          <div class="avatar">A</div>
+        </div>
+      </header>
+
+      <section class="menu-grid" id="menuGrid">
+        <!-- Product cards injected by JS -->
+      </section>
+    </main>
+
+    <aside class="right-panel">
+      <h3>My Order</h3>
+    
+
+      <div class="cart" id="cartList">
+        <!-- cart items injected by JS -->
+      </div>
+
+      <div class="summary">
+        <div class="row">
+          <span>Sub Total</span><span id="subTotal">Php0.00</span>
+        </div>
+        <div class="row total">
+          <strong>Total</strong><strong id="total">Php0.00</strong>
+        </div>
+
+        <button id="checkout" class="checkout">Check out</button>
+      </div>
+    </aside>
+  </div>
+
+  <script src="mi_amore.js"></script>
+</body>
+</html>

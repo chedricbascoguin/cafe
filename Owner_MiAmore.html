@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Inventory — Mi Amore (Owner)</title>
+  <link rel="stylesheet" href="mi_amore.css" />
+  <style>
+    body{padding:20px;font-family:Arial,Helvetica,sans-serif}
+    h1{margin-bottom:8px}
+    .controls{margin:12px 0}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:8px;border:1px solid #e6e6e6;text-align:left}
+    th{background:#fafafa}
+    tfoot td{font-weight:700}
+    .muted{color:#666;font-size:0.95rem}
+  </style>
+</head>
+<body>
+  <h1>Mi Amore — Inventory / Sales Report</h1>
+  <div class="muted">This page reads orders saved by the kiosk (IndexedDB) and shows aggregated sold quantities and revenue per item.</div>
+
+  <div class="controls">
+    <button id="refreshBtn">Refresh</button>
+    <button id="exportCsvBtn">Export CSV</button>
+    <span id="status" style="margin-left:12px;color:#666"></span>
+  </div>
+
+  <table id="inventoryTable" aria-live="polite">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Unit Price</th>
+        <th>Sold Qty</th>
+        <th>Revenue</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td colspan="4" class="muted">No data. Click "Refresh" to load orders.</td></tr>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td>Total</td>
+        <td></td>
+        <td id="totalQty">0</td>
+        <td id="totalRevenue">$0.00</td>
+      </tr>
+    </tfoot>
+  </table>
+
+<script>
+const DB_NAME = "mi_amore_db";
+const DB_VERSION = 1;
+const STORE_ORDERS = "orders";
+
+function openDb() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = () => {
+      // DB should already be created by kiosk; ensure stores exist so page doesn't fail
+      const idb = req.result;
+      if (!idb.objectStoreNames.contains(STORE_ORDERS)) {
+        idb.createObjectStore(STORE_ORDERS, { keyPath: "orderId", autoIncrement: true });
+      }
+    };
+    req.onsuccess = (ev) => resolve(ev.target.result);
+    req.onerror = (ev) => reject(ev.target.error);
+  });
+}
+
+function idbGetAll(db, storeName) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, "readonly");
+    const store = tx.objectStore(storeName);
+    const req = store.getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function formatCurrency(n){ return '$' + Number(n || 0).toFixed(2); }
+
+async function loadInventory() {
+  const statusEl = document.getElementById('status');
+  statusEl.textContent = "Loading…";
+  try {
+    const db = await openDb();
+    const orders = await idbGetAll(db, STORE_ORDERS);
+    const map = new Map(); // key -> { name, price, qty, revenue }
+
+    orders.forEach(o => {
+      if (!o.items || !Array.isArray(o.items)) return;
+      o.items.forEach(it => {
+        const key = it.id != null ? String(it.id) + '::' + it.name : it.name;
+        const entry = map.get(key) || { name: it.name, price: it.price || 0, qty: 0, revenue: 0 };
+        entry.qty += (it.qty || 0);
+        entry.revenue += (it.qty || 0) * (it.price || 0);
+        map.set(key, entry);
+      });
+    });
+
+    renderTable(map);
+    statusEl.textContent = `Loaded ${orders.length} order(s).`;
+  } catch (err) {
+    console.error(err);
+    document.getElementById('status').textContent = "Failed to load orders (see console).";
+  }
+}
+
+function renderTable(map) {
+  const tbody = document.querySelector('#inventoryTable tbody');
+  tbody.innerHTML = '';
+  let totalQty = 0, totalRevenue = 0;
+  if (map.size === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" class="muted">No sales yet.</td></tr>';
+  } else {
+    Array.from(map.values()).sort((a,b)=>b.qty - a.qty).forEach(row => {
+      const tr = document.createElement('tr');
+      const tdName = document.createElement('td'); tdName.textContent = row.name;
+      const tdPrice = document.createElement('td'); tdPrice.textContent = formatCurrency(row.price);
+      const tdQty = document.createElement('td'); tdQty.textContent = row.qty;
+      const tdRev = document.createElement('td'); tdRev.textContent = formatCurrency(row.revenue);
+      tr.appendChild(tdName); tr.appendChild(tdPrice); tr.appendChild(tdQty); tr.appendChild(tdRev);
+      tbody.appendChild(tr);
+      totalQty += row.qty;
+      totalRevenue += row.revenue;
+    });
+  }
+  document.getElementById('totalQty').textContent = totalQty;
+  document.getElementById('totalRevenue').textContent = formatCurrency(totalRevenue);
+}
+
+function exportCsv() {
+  const rows = [];
+  const headers = ['Product','Unit Price','Sold Qty','Revenue'];
+  rows.push(headers.join(','));
+  const tbody = document.querySelectorAll('#inventoryTable tbody tr');
+  tbody.forEach(tr => {
+    const cells = Array.from(tr.querySelectorAll('td'));
+    if (cells.length !== 4) return;
+    const vals = cells.map(td => {
+      // escape commas/quotes
+      const v = td.textContent.replace(/"/g, '""');
+      return `"${v}"`;
+    });
+    rows.push(vals.join(','));
+  });
+  // add totals row
+  const totalQty = document.getElementById('totalQty').textContent;
+  const totalRevenue = document.getElementById('totalRevenue').textContent;
+  rows.push(`"Total","","${totalQty}","${totalRevenue}"`);
+
+  const csv = rows.join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'mi_amore_inventory.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById('refreshBtn').addEventListener('click', loadInventory);
+document.getElementById('exportCsvBtn').addEventListener('click', exportCsv);
+
+// auto-load on open
+loadInventory();
+</script>
+</body>
+</html>

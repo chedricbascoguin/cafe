@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cafe</title>
+  <link rel="stylesheet" href="mi_amore_login.css"> <!-- external CSS -->
+</head>
+<body>
+  <div class="container">
+    <div class="hero">
+      <img src="Images/490997317_1677994286137797_5570940802778875575_n.jpg" alt="Cafe banner">
+    </div>
+
+    <div class="panel">
+      <div class="date-bubble" id="dateBubble">Loading...</div>
+      <div class="brand">CAFÉCARE</div>
+      <div class="tag">Smart Ingredient Stock &amp; Expiry Tracker</div>
+
+      <div class="form-row">
+        <label for="username">Username</label>
+        <input id="username" type="text" placeholder="Enter username">
+      </div>
+
+      <div class="form-row">
+        <label for="password">Password</label>
+        <input id="password" type="password" placeholder="Enter password">
+      </div>
+
+      <div class="form-row">
+        <label for="role">Role</label>
+        <select id="role">
+          <option>Role</option>
+          <option>Admin</option>
+          <option>Barista</option>
+        </select>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:center;margin-top:10px">
+        <button class="login-btn" id="loginBtn">LOGIN</button>
+        <div class="small">
+          Do you have an account? If not, please 
+          <span class="link" id="openReg">click here</span> to register.
+        </div>
+      </div>
+    </div>
+  </div>
+
+ <div class="modal" id="regModal">
+  <div class="dialog">
+    <h3>Registration</h3>
+    <div class="form-row">
+      <label for="regUsername">Username</label>
+      <input id="regUsername" type="text" placeholder="Enter username">
+    </div>
+    <div class="form-row">
+      <label for="regPassword">Password</label>
+      <input id="regPassword" type="password" placeholder="Enter password">
+    </div>
+    <div class="form-row">
+      <label for="regRole">Role</label>
+      <select id="regRole">
+        <option>Role</option>
+        <option>Admin</option>
+        <option>Barista</option>
+      </select>
+    </div>
+    <div style="text-align:right;margin-top:12px">
+      <button id="registerBtn">Register</button>
+      <button id="closeReg">Close</button>
+    </div>
+    <div id="regMsg" style="margin-top:8px;color:red"></div>
+  </div>
+</div>
+
+  <script src="pharmacist.js"></script> <!-- external JS -->
+</body>
+</html>
